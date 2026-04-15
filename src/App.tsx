@@ -458,9 +458,6 @@ function App() {
           {/* 프로필 메뉴 (우측 상단) */}
           {currentUser && (
             <div className="absolute top-0 right-0">
-              <div className="bg-red-500 text-white px-2 py-1 text-xs mb-1 rounded">
-                DEBUG: uid={user?.uid} / email={user?.email} / nickname={currentUser?.nickname} / selectedUserId={selectedUserId || currentUser?.uid}
-              </div>
               <ProfileMenu
                 currentUser={currentUser}
                 sharedUsers={sharedUsers}
