@@ -7,9 +7,10 @@ interface TodoItemProps {
   onToggle: (id: string) => void;
   onEdit: (id: string, updates: Partial<Todo>) => void;
   onDelete: (id: string) => void;
+  isReadOnly?: boolean;
 }
 
-export function TodoItem({ todo, onToggle, onEdit, onDelete }: TodoItemProps) {
+export function TodoItem({ todo, onToggle, onEdit, onDelete, isReadOnly = false }: TodoItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(todo.text);
   const [editPriority, setEditPriority] = useState(todo.priority);
@@ -45,7 +46,8 @@ export function TodoItem({ todo, onToggle, onEdit, onDelete }: TodoItemProps) {
     return `${date.getMonth() + 1}/${date.getDate()}`;
   };
 
-  if (isEditing) {
+  // 읽기 전용 모드일 때는 편집 UI 표시하지 않음
+  if (isEditing && !isReadOnly) {
     return (
       <div className="bg-white rounded-lg shadow-sm border border-blue-300 p-4">
         <div className="space-y-3">
@@ -102,49 +104,68 @@ export function TodoItem({ todo, onToggle, onEdit, onDelete }: TodoItemProps) {
 
   return (
     <div
-      className={`group bg-white rounded-lg shadow-sm border ${priorityColors.border} p-4 hover:shadow-md transition-all ${todo.completed ? 'opacity-60' : ''}`}
+      className={`group rounded-lg shadow-sm border p-4 transition-all ${
+        isReadOnly 
+          ? `bg-gray-50 border-gray-200 ${todo.completed ? 'opacity-50' : 'opacity-90'}` 
+          : `bg-white ${priorityColors.border} hover:shadow-md ${todo.completed ? 'opacity-60' : ''}`
+      }`}
     >
       <div className="flex items-start gap-3">
+        {/* 읽기 전용 모드: 체크박스 비활성화 (시각적으로만 표시) */}
         <input
           type="checkbox"
           checked={todo.completed}
-          onChange={() => onToggle(todo.id)}
-          className="mt-1 w-5 h-5 rounded border-gray-300 text-blue-500 focus:ring-blue-500 cursor-pointer"
+          onChange={() => !isReadOnly && onToggle(todo.id)}
+          disabled={isReadOnly}
+          className={`mt-1 w-5 h-5 rounded border-gray-300 text-blue-500 focus:ring-blue-500 ${
+            isReadOnly 
+              ? 'cursor-not-allowed opacity-60' 
+              : 'cursor-pointer'
+          }`}
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
+            {/* 읽기 전용 모드: 텍스트만 표시, 클릭 불가 */}
             <p
-              onClick={() => setIsEditing(true)}
-              className={`flex-1 cursor-pointer ${todo.completed ? 'line-through text-gray-400' : 'text-gray-800'} hover:text-blue-600`}
+              onClick={() => !isReadOnly && setIsEditing(true)}
+              className={`flex-1 ${
+                isReadOnly 
+                  ? `${todo.completed ? 'line-through text-gray-500' : 'text-gray-700'} cursor-default` 
+                  : `cursor-pointer ${todo.completed ? 'line-through text-gray-400' : 'text-gray-800 hover:text-blue-600'}`
+              }`}
             >
               {todo.text}
             </p>
-            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button
-                onClick={() => setIsEditing(true)}
-                className="p-1 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded transition-colors"
-                title="수정"
-              >
-                ✏️
-              </button>
-              <button
-                onClick={() => onDelete(todo.id)}
-                className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
-                title="삭제"
-              >
-                🗑️
-              </button>
-            </div>
+            {/* 읽기 전용 모드: 액션 버튼 완전히 숨김 */}
+            {!isReadOnly && (
+              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="p-1 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded transition-colors"
+                  title="수정"
+                >
+                  ✏️
+                </button>
+                <button
+                  onClick={() => onDelete(todo.id)}
+                  className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                  title="삭제"
+                >
+                  🗑️
+                </button>
+              </div>
+            )}
           </div>
+          {/* 읽기 전용 모드: 태그 색상도 약간 흐리게 */}
           <div className="flex items-center gap-2 mt-2">
-            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${priorityColors.bg} ${priorityColors.text}`}>
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${priorityColors.bg} ${priorityColors.text} ${isReadOnly ? 'opacity-70' : ''}`}>
               {todo.priority === 'high' ? '높음' : todo.priority === 'medium' ? '중간' : '낮음'}
             </span>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 ${isReadOnly ? 'opacity-70' : ''}`}>
               {todo.category}
             </span>
             {todo.dueDate && (
-              <span className={`inline-flex items-center text-xs ${isOverdue ? 'text-red-500 font-medium' : 'text-gray-500'}`}>
+              <span className={`inline-flex items-center text-xs ${isOverdue ? 'text-red-500 font-medium' : `text-gray-500 ${isReadOnly ? 'opacity-70' : ''}`}`}>
                 📅 {formatDate(todo.dueDate)}
                 {isOverdue && ' (지연)'}
               </span>

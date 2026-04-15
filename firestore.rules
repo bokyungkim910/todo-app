@@ -1,0 +1,64 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 헬퍼 함수: 인증된 사용자 확인
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // 헬퍼 함수: 자신의 데이터 접근 확인
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // 헬퍼 함수: 공유된 데이터 읽기 권한 확인 (최대 2인 공유)
+    function hasReadPermission(userId) {
+      return isAuthenticated() && (
+        request.auth.uid == userId ||
+        exists(/databases/$(database)/documents/shared/$(userId)/sharedWith/$(request.auth.uid))
+      );
+    }
+
+    // 헬퍼 함수: 유효한 Todo 데이터 확인
+    function isValidTodo(todo) {
+      return todo.keys().hasAll(['text', 'completed', 'createdAt']) &&
+             todo.text is string &&
+             todo.completed is bool &&
+             todo.createdAt is timestamp;
+    }
+
+    // ==================== users 컬렉션 ====================
+    match /users/{userId} {
+      // 사용자 프로필: 인증된 사용자는 읽기 가능, 자신만 쓰기 가능
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId);
+    }
+
+    // ==================== todos 컬렉션 ====================
+    // 경로: /todos/{userId}/{type}/{docId}
+    // type: 'monthly' 또는 'daily'
+    match /todos/{userId}/{type}/{docId} {
+      // 읽기: 자신이거나 공유받은 사용자
+      allow read: if hasReadPermission(userId);
+      // 쓰기: 자신만 가능
+      allow write: if isOwner(userId);
+    }
+
+    // ==================== shared 컬렉션 (공유 관계) ====================
+    // 경로: /shared/{userId}/sharedWith/{targetUserId}
+    match /shared/{userId}/sharedWith/{targetUserId} {
+      // 읽기: 자신의 공유 목록만
+      allow read: if isOwner(userId);
+      // 쓰기: 자신만 가능 + 최대 2인 제한
+      allow write: if isOwner(userId) &&
+        (resource == null ||
+         getAfter(/databases/$(database)/documents/shared/$(userId)/metadata/count).data.value <= 2);
+    }
+
+    // 공유 카운트 - 최대 2인 제한 확인용
+    match /shared/{userId}/metadata/count {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId);
+    }
+  }
+}

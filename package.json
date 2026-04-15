@@ -7,9 +7,20 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "cap:sync": "cap sync",
+    "cap:copy": "cap copy",
+    "cap:open:android": "cap open android",
+    "cap:run:android": "cap run android",
+    "cap:build:android": "npm run build && cap sync android",
+    "android": "npm run build && cap sync android && cap open android",
+    "android:live": "npm run build && cap sync android && cap run android --livereload --external"
   },
   "dependencies": {
+    "@capacitor/android": "^7.2.0",
+    "@capacitor/cli": "^7.2.0",
+    "@capacitor/core": "^7.2.0",
+    "firebase": "^12.11.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },
