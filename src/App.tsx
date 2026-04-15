@@ -379,50 +379,73 @@ function App() {
   // 인증되지 않은 상태 처리
   if (!authLoading && !isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
-          <div className="mb-6">
-            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-4xl">📝</span>
-            </div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">To Do List</h1>
-            <p className="text-gray-600">효율적인 할 일 관리를 시작하세요</p>
-          </div>
+      <div className="min-h-screen bg-gray-100">
+        {/* 우측 상단 로그인 버튼 */}
+        <div className="absolute top-4 right-4 z-50">
           <button
             onClick={() => setIsAuthModalOpen(true)}
-            className="w-full py-3 px-4 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors"
+            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors shadow-md"
           >
-            로그인 / 회원가입
+            로그인
           </button>
-          <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+        </div>
+        <div className="flex items-center justify-center px-4 min-h-screen">
+          <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+            <div className="mb-6">
+              <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-4xl">📝</span>
+              </div>
+              <h1 className="text-2xl font-bold text-gray-800 mb-2">To Do List</h1>
+              <p className="text-gray-600">효율적인 할 일 관리를 시작하세요</p>
+            </div>
+            <button
+              onClick={() => setIsAuthModalOpen(true)}
+              className="w-full py-3 px-4 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors"
+            >
+              로그인 / 회원가입
+            </button>
+            <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+          </div>
         </div>
       </div>
     );
   }
 
-  // 로딩 중
+  // 로딩 중 (Firebase Auth 초기화 대기)
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="flex items-center gap-3 text-gray-600">
-          <svg className="animate-spin h-6 w-6" viewBox="0 0 24 24">
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-              fill="none"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            />
-          </svg>
-          <span>로딩 중...</span>
+      <div className="min-h-screen bg-gray-100">
+        {/* 우측 상단 로그인 버튼 */}
+        <div className="absolute top-4 right-4 z-50">
+          <button
+            onClick={() => setIsAuthModalOpen(true)}
+            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors shadow-md"
+          >
+            로그인
+          </button>
         </div>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="flex items-center gap-3 text-gray-600">
+            <svg className="animate-spin h-6 w-6" viewBox="0 0 24 24">
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+                fill="none"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
+            </svg>
+            <span>로딩 중...</span>
+          </div>
+        </div>
+        <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
       </div>
     );
   }
