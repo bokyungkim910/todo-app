@@ -17,7 +17,7 @@ export {
 } from './useFirestoreTodos';
 
 // Auth 훅
-export { useAuth, useAuthContext } from './useAuth';
+export { useAuthContext } from '../contexts/AuthContext';
 export type { AuthContextType } from '../contexts/AuthContext';
 
 // 타입

@@ -117,7 +117,7 @@ const validateNickname = (nickname: string): string | undefined => {
  * }
  * ```
  */
-export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalProps): JSX.Element | null {
+export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalProps): React.ReactElement | null {
   const { login, register, error: authError, actionLoading, clearError, isAuthenticated } = useAuthContext();
 
   // 모드 상태

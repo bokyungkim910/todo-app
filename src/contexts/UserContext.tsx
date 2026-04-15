@@ -32,11 +32,11 @@ const STORAGE_KEYS = {
   VIEW_MODE: 'todo-app-view-mode',
 };
 
-// Mock 사용자 데이터 (초기 데이터)
+// Mock 사용자 데이터 (초기 데이터) - Firebase Auth 사용으로 인해 실제로는 사용되지 않음
 const MOCK_USERS: User[] = [
-  { id: '1', nickname: '나', color: '#3B82F6' },
-  { id: '2', nickname: '엄마', color: '#EC4899' },
-  { id: '3', nickname: '아빠', color: '#10B981' },
+  { uid: '1', email: 'user1@example.com', nickname: '나', color: '#3B82F6' },
+  { uid: '2', email: 'user2@example.com', nickname: '엄마', color: '#EC4899' },
+  { uid: '3', email: 'user3@example.com', nickname: '아빠', color: '#10B981' },
 ];
 
 // Provider 컴포넌트

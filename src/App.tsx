@@ -253,12 +253,6 @@ function App() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
-  // 읽기 전용 모드 계산
-  const isReadOnly = selectedUserId !== null && selectedUserId !== user?.uid;
-  const ownerName = isReadOnly
-    ? sharedUsers.find((u) => u.uid === selectedUserId)?.nickname || '사용자'
-    : null;
-
   // 공유 관리
   const {
     sharedUsers,
@@ -269,6 +263,12 @@ function App() {
     acceptInvite,
     rejectInvite,
   } = useShareManagement(user?.uid || null);
+
+  // 읽기 전용 모드 계산
+  const isReadOnly = selectedUserId !== null && selectedUserId !== user?.uid;
+  const ownerName = isReadOnly
+    ? sharedUsers.find((u) => u.uid === selectedUserId)?.nickname || '사용자'
+    : null;
 
   // 현재 보고 있는 사용자 ID (내 체크리스트 또는 공유된 사용자)
   const effectiveUserId = selectedUserId || user?.uid || null;

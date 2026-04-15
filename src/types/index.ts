@@ -24,7 +24,10 @@ export interface User {
   uid: string;
   email: string;
   nickname: string;
-  createdAt: number;
+  createdAt?: number;
+  id?: string; // uid와 동일 (하위 호환성)
+  color?: string; // 프로필 색상
+  avatar?: string; // 아바타 URL
 }
 
 export interface SharedUser {

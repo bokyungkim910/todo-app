@@ -5,12 +5,12 @@ import { initializeFirestoreDB } from '../hooks/useFirestoreTodos';
 // Firebase 설정
 // 실제 프로젝트에서는 환경 변수로 관리
 const firebaseConfig = {
-  apiKey: process.env.VITE_FIREBASE_API_KEY || 'your-api-key',
-  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN || 'your-project.firebaseapp.com',
-  projectId: process.env.VITE_FIREBASE_PROJECT_ID || 'your-project-id',
-  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET || 'your-project.appspot.com',
-  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '123456789',
-  appId: process.env.VITE_FIREBASE_APP_ID || '1:123456789:web:abcdef',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'your-api-key',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'your-project.firebaseapp.com',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'your-project-id',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'your-project.appspot.com',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '123456789',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:123456789:web:abcdef',
 };
 
 // Firebase 앱 인스턴스
@@ -32,7 +32,7 @@ export function initializeFirebase(): FirebaseApp {
     initializeFirestoreDB(app);
 
     // 개발 환경에서 에뮬레이터 사용 (선택사항)
-    if (process.env.NODE_ENV === 'development' && process.env.VITE_USE_EMULATOR === 'true') {
+    if (import.meta.env.DEV && import.meta.env.VITE_USE_EMULATOR === 'true') {
       connectAuthEmulator(auth, 'http://localhost:9099');
       console.log('Firebase Auth Emulator connected');
     }

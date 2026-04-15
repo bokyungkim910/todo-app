@@ -456,7 +456,7 @@ export function useFirestoreDailyTodos(
   }, [db, dateKey, targetUserId]);
 
   // CRUD Operations
-  const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, '9')}`;
+  const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
   const addTodo = useCallback(
     async (text: string, todoOptions: Partial<Todo> = {}) => {
