@@ -258,4 +258,81 @@ refactor: simplify todo filtering logic
 
 ---
 
-*Last Updated: 2026-04-15*
+## 📝 개발 활동 기록 (2026-04-16)
+
+### 색인 생성 (Firestore Indexes)
+- **문제**: 일별/월별 할 일 조회 시 `The query requires an index` 오류 발생
+- **원인**: `order ASC + createdAt DESC` 조합의 복합 색인 부재
+- **해결**: `firestore.indexes.json`에 다음 색인 추가
+  ```json
+  {
+    "collectionGroup": "todos",
+    "fields": [
+      { "fieldPath": "order", "order": "ASCENDING" },
+      { "fieldPath": "createdAt", "order": "DESCENDING" }
+    ]
+  }
+  ```
+- **커밋**: `c90a52f` - fix: remove debug log and add Firestore composite index
+
+### DEBUG 로그 제거
+- **문제**: 프로필 메뉴 우측 상단에 DEBUG 정보 표시
+- **해결**: `src/App.tsx`에서 DEBUG 로그 컴포넌트 제거
+- **커밋**: `c90a52f`
+
+### Firebase Auth 연동 - 사용자 프로필 자동 생성
+- **문제**: `users` 컬렉션이 비어있어서 사용자 초대 시 "해당 이메일의 사용자를 찾을 수 없습니다" 오류
+- **원인**: 회원가입 시 Firebase Auth 사용자는 생성되지만 Firestore `users` 문서가 생성되지 않음
+- **해결**: `src/contexts/AuthContext.tsx` 수정
+  - 회원가입 시 `users/{userId}` 프로필 자동 생성
+  - 로그인 시 프로필이 없으면 자동 생성
+  - 저장 필드: `email`, `nickname`, `createdAt`
+- **추가**: `firestore.indexes.json`에 `users` 컬렉션의 `email` 필드 색인 추가 (이메일 검색용)
+- **커밋**: `c120a30` - fix: auto-create user profile in Firestore on registration/login
+
+### 로그아웃 버튼 추가
+- **문제**: ProfileMenu에 로그아웃 버튼이 없음
+- **해결**: `src/components/ProfileMenu.tsx`에 `onLogout` prop 추가 및 로그아웃 버튼 UI 구현
+- **커밋**: `8308efc` - feat: add logout button to ProfileMenu
+
+### Firestore Security Rules 수정
+- **문제 1**: `users` 컬렉션의 이메일 검색 시 `Missing or insufficient permissions`
+  - **원인**: `match /users/{userId}` 규칙에서 다른 사용자의 문서를 읽을 수 없음
+  - **해결**: `match /users` (컬렉션 레벨)에 `allow read: if isAuthenticated()` 추가
+
+- **문제 2**: 초대 생성 시 `Missing or insufficient permissions`
+  - **원인**: `invites/{inviteId}`에서 `allow write: if isOwner(inviteId)` - `inviteId`는 자동 생성된 문서 ID로, 사용자의 UID와 다름
+  - **해결**: `allow create: if isAuthenticated()`로 변경
+
+- **문제 3**: 초대 수락 시 `Missing or insufficient permissions`
+  - **원인**: 초대받은 사람이 초대자의 `users/{inviterId}/shares`에 쓸 권한 없음
+  - **해결**: `shares/{shareId}` 규칙에 조건부 쓰기 권한 추가
+    ```rules
+    allow write: if isOwner(userId) ||
+      (resource.data.sharedWithId == request.auth.uid && request.resource.data.status == 'active');
+    ```
+
+- **문제 4**: 초대 거부 시 `Missing or insufficient permissions`
+  - **원인**: 초대자/초대받거자 모두 `inviteId`(문서 ID)가 자신의 UID가 아니므로 수정 권한 없음
+  - **해결**: 아직 수정 안 됨 - 아래 제안된 규칙 적용 필요
+    ```rules
+    allow update: if request.auth.uid == resource.data.inviterId || 
+                     request.auth.uid == resource.data.inviteeId;
+    ```
+
+### 초대 수락 시 양방향 공유 로직 수정
+- **문제**: 초대 수락 시 초대자의 shares만 active로 변경, 초대받은 사람은 공유看不到
+- **원인**: 초대받은 사람의 shares에 초대자를 추가하는 로직缺失
+- **해결**: `src/App.tsx`의 `acceptInvite` 함수 수정
+  - 초대자의 shares 상태를 active로 변경
+  - **초대받은 사람(나)의 shares에 초대자 추가** ← 핵심 수정
+  - `writeBatch`를 사용해서 원자적 처리
+- **커밋**: `4cb93d3` - fix: add inviter to invitee's shares when accepting invite
+
+### 알려진 이슈
+1. **초대 거부 여전히 오류 발생**: `invites/{inviteId}` 규칙에서 `update` 권한이 초대자/초대받거자 모두에게 없음
+2. **이메일 초대 기능 미구현**: 초대 링크나 이메일을 통한 초대 기능 필요 (Firebase Invites deprecated됨)
+
+---
+
+*Last Updated: 2026-04-16*

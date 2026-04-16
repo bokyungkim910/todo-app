@@ -61,7 +61,9 @@ service cloud.firestore {
     match /invites/{inviteId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated();
-      allow update, delete: if isOwner(inviteId);
+      allow update: if request.auth.uid == resource.data.inviterId || 
+                     request.auth.uid == resource.data.inviteeId;
+      allow delete: if isOwner(inviteId);
     }
   }
 }
