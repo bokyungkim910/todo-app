@@ -243,7 +243,7 @@ function useShareManagement(currentUserId: string | null) {
 // ============================================
 
 function App() {
-  const { user, isAuthenticated, loading: authLoading } = useAuthContext();
+  const { user, isAuthenticated, loading: authLoading, logout } = useAuthContext();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
 
   // 선택된 사용자 ID (공유된 사용자의 체크리스트를 볼 때 사용)
@@ -464,6 +464,7 @@ function App() {
                 selectedUserId={selectedUserId || currentUser.uid}
                 onSelectUser={handleSelectUser}
                 onOpenSettings={() => setIsShareModalOpen(true)}
+                onLogout={logout}
                 isReadOnly={isReadOnly}
               />
             </div>
