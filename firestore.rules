@@ -15,7 +15,8 @@ service cloud.firestore {
     function hasReadPermission(userId) {
       return isAuthenticated() && (
         request.auth.uid == userId ||
-        exists(/databases/$(database)/documents/users/$(userId)/shares/$(request.auth.uid))
+        (exists(/databases/$(database)/documents/users/$(userId)/shares/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(userId)/shares/$(request.auth.uid)).data.status == 'active')
       );
     }
 

@@ -6,10 +6,11 @@ import {
   signOut,
   onAuthStateChanged,
   updateProfile,
+  signInWithPopup,
   AuthError,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db } from '../firebase/config';
+import { auth, db, googleProvider } from '../firebase/config';
 
 // ============================================
 // 타입 정의
@@ -28,6 +29,8 @@ export interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   /** 이메일/비밀번호로 회원가입 (닉네임 포함) */
   register: (email: string, password: string, nickname: string) => Promise<void>;
+  /** Google로 로그인 */
+  loginWithGoogle: () => Promise<void>;
   /** 로그아웃 */
   logout: () => Promise<void>;
   /** 에러 초기화 */
@@ -188,6 +191,34 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
   );
 
   /**
+   * Google로 로그인합니다.
+   */
+  const loginWithGoogle = useCallback(async (): Promise<void> => {
+    try {
+      setActionLoading(true);
+      setError(null);
+
+      const result = await signInWithPopup(auth, googleProvider);
+
+      // Firestore에 프로필 자동 생성 (이미 있으면 무시)
+      const userDocRef = doc(db, 'users', result.user.uid);
+      const userDoc = await getDoc(userDocRef);
+      if (!userDoc.exists()) {
+        await setDoc(userDocRef, {
+          email: result.user.email || '',
+          nickname: result.user.displayName || result.user.email?.split('@')[0] || '사용자',
+          createdAt: serverTimestamp(),
+        });
+      }
+    } catch (err) {
+      handleError(err);
+      throw err;
+    } finally {
+      setActionLoading(false);
+    }
+  }, [handleError]);
+
+  /**
    * 로그아웃합니다.
    */
   const logout = useCallback(async (): Promise<void> => {
@@ -251,11 +282,12 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
       error,
       login,
       register,
+      loginWithGoogle,
       logout,
       clearError,
       isAuthenticated: !!user,
     }),
-    [user, loading, actionLoading, error, login, register, logout, clearError]
+    [user, loading, actionLoading, error, login, register, loginWithGoogle, logout, clearError]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
