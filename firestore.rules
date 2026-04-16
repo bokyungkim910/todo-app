@@ -28,6 +28,11 @@ service cloud.firestore {
     }
 
     // ==================== users 컬렉션 ====================
+    // 컬렉션 전체에 대한 읽기 권한 (이메일 검색용)
+    match /users {
+      allow read: if isAuthenticated();
+    }
+
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow write: if isOwner(userId);
@@ -46,15 +51,17 @@ service cloud.firestore {
 
       // 공유 목록: users/{userId}/shares/{shareId}
       match /shares/{shareId} {
-        allow read: if isOwner(userId);
-        allow write: if isOwner(userId);
+        allow read: if isAuthenticated();
+        allow write: if isOwner(userId) ||
+          (resource.data.sharedWithId == request.auth.uid && request.resource.data.status == 'active');
       }
     }
 
     // ==================== invites 컬렉션 (전역 초대) ====================
     match /invites/{inviteId} {
       allow read: if isAuthenticated();
-      allow write: if isOwner(inviteId);
+      allow create: if isAuthenticated();
+      allow update, delete: if isOwner(inviteId);
     }
   }
 }

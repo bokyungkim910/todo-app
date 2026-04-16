@@ -26,6 +26,8 @@ import {
   orderBy,
   serverTimestamp,
   getDocs,
+  getDoc,
+  writeBatch,
 } from 'firebase/firestore';
 
 type ViewMode = 'list' | 'calendar';
@@ -196,21 +198,44 @@ function useShareManagement(currentUserId: string | null) {
       if (!currentUserId) throw new Error('로그인이 필요합니다');
 
       const inviteRef = doc(db, 'invites', inviteId);
+      const inviteSnap = await getDoc(inviteRef);
+      
+      if (!inviteSnap.exists()) {
+        throw new Error('초대를 찾을 수 없습니다.');
+      }
+      
+      const inviteData = inviteSnap.data();
+      const inviterId = inviteData.inviterId;
+      const inviterEmail = inviteData.inviterEmail;
+      const inviterNickname = inviteData.inviterNickname;
+
+      // 1. 초대 문서 상태를 accepted로 변경
       await updateDoc(inviteRef, { status: 'accepted', acceptedAt: serverTimestamp() });
 
-      // 상대방의 shares에서도 active로 업데이트
-      const inviteData = (await getDocs(query(collection(db, 'invites'), where('__name__', '==', inviteId)))).docs[0]?.data();
-      if (inviteData) {
-        const sharesRef = collection(db, 'users', inviteData.inviterId, 'shares');
-        const q = query(sharesRef, where('sharedWithId', '==', currentUserId));
-        const snapshot = await getDocs(q);
-        snapshot.docs.forEach((docSnapshot) => {
-          updateDoc(doc(db, 'users', inviteData.inviterId, 'shares', docSnapshot.id), {
-            status: 'active',
-            acceptedAt: serverTimestamp(),
-          });
+      // 2. 초대자의 shares에서 내 상태를 active로 변경
+      const inviterSharesRef = collection(db, 'users', inviterId, 'shares');
+      const q = query(inviterSharesRef, where('sharedWithId', '==', currentUserId));
+      const snapshot = await getDocs(q);
+      const batch = writeBatch(db);
+      snapshot.docs.forEach((docSnapshot) => {
+        batch.update(doc(db, 'users', inviterId, 'shares', docSnapshot.id), {
+          status: 'active',
+          acceptedAt: serverTimestamp(),
         });
-      }
+      });
+
+      // 3. 내 shares에 초대자 추가 (양방향 공유)
+      const mySharesRef = collection(db, 'users', currentUserId, 'shares');
+      batch.set(doc(mySharesRef), {
+        sharedWithId: inviterId,
+        sharedWithEmail: inviterEmail,
+        sharedWithNickname: inviterNickname,
+        status: 'active',
+        createdAt: serverTimestamp(),
+        acceptedAt: serverTimestamp(),
+      });
+
+      await batch.commit();
     },
     [currentUserId]
   );
