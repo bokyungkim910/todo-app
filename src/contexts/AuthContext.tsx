@@ -8,7 +8,8 @@ import {
   updateProfile,
   AuthError,
 } from 'firebase/auth';
-import { auth } from '../firebase/config';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from '../firebase/config';
 
 // ============================================
 // 타입 정의
@@ -166,6 +167,14 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
           displayName: nickname,
         });
 
+        // Firestore에 사용자 프로필 생성
+        const userDocRef = doc(db, 'users', userCredential.user.uid);
+        await setDoc(userDocRef, {
+          email: email,
+          nickname: nickname,
+          createdAt: serverTimestamp(),
+        });
+
         // 사용자 상태 업데이트 (displayName이 포함된 새로운 user 객체)
         setUser({ ...userCredential.user });
       } catch (err) {
@@ -203,7 +212,21 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
 
     const unsubscribe = onAuthStateChanged(
       auth,
-      (currentUser) => {
+      async (currentUser) => {
+        if (currentUser) {
+          // 사용자 프로필이 Firestore에 존재하는지 확인
+          const userDocRef = doc(db, 'users', currentUser.uid);
+          const userDoc = await getDoc(userDocRef);
+
+          // 프로필이 없으면 생성
+          if (!userDoc.exists()) {
+            await setDoc(userDocRef, {
+              email: currentUser.email || '',
+              nickname: currentUser.displayName || currentUser.email?.split('@')[0] || '사용자',
+              createdAt: serverTimestamp(),
+            });
+          }
+        }
         setUser(currentUser);
         setLoading(false);
       },
